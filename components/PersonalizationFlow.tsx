@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileUploader } from './FileUploader';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
-import { Sparkles, ArrowRight, RefreshCw, Download, Wand2 } from 'lucide-react';
+import { Sparkles, ArrowRight, RefreshCw, Download, Wand2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-// eslint-disable-next-line @next/next/no-img-element
+import html2canvas from 'html2canvas';
 
 type Step = 'upload' | 'processing' | 'result';
 
@@ -15,6 +15,9 @@ export function PersonalizationFlow() {
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    const resultRef = useRef<HTMLDivElement>(null);
 
     const handleFileSelect = (selectedFile: File) => {
         setFile(selectedFile);
@@ -46,11 +49,37 @@ export function PersonalizationFlow() {
         }
     }, [step]);
 
+    const handleDownload = async () => {
+        if (!resultRef.current) return;
+
+        try {
+            setIsDownloading(true);
+            // Wait a slight bit to ensure rendering is perfect
+            await new Promise(r => setTimeout(r, 100));
+
+            const canvas = await html2canvas(resultRef.current, {
+                useCORS: true,
+                scale: 2, // Higher quality
+                backgroundColor: null
+            });
+
+            const link = document.createElement('a');
+            link.download = 'pickabook-story.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (err) {
+            console.error("Download failed:", err);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     const resetParams = () => {
         setFile(null);
         setPreviewUrl(null);
         setStep('upload');
         setProgress(0);
+        setIsDownloading(false);
     };
 
     return (
@@ -160,18 +189,20 @@ export function PersonalizationFlow() {
                             </div>
 
                             {/* Result Composition */}
-                            <div className="relative w-full max-w-2xl aspect-video rounded-2xl overflow-hidden shadow-2xl border-4 border-white mb-8 group">
+                            <div
+                                ref={resultRef}
+                                className="relative w-full max-w-2xl aspect-video rounded-2xl overflow-hidden shadow-2xl border-4 border-white mb-8 group bg-white"
+                            >
                                 {/* Background Template */}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src="/template.png"
                                     alt="Story Template"
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                    className="w-full h-full object-cover"
                                 />
 
-                                {/* Overlaying the User Photo (Simulated "Integration") */}
-                                {/* In a real app, this would be the output from SDXL/InstantID */}
-                                {/* Here we simulate it by placing it nicely with a blend mode or mask */}
-                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/3 aspect-square rounded-full overflow-hidden border-4 border-white/50 shadow-inner">
+                                {/* Layer 2: The Generated Child Character (Simulated from Backend) */}
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/3 aspect-square rounded-full overflow-hidden border-4 border-white/50 shadow-inner z-10">
                                     <img
                                         src={previewUrl}
                                         alt="Child"
@@ -181,8 +212,13 @@ export function PersonalizationFlow() {
                                     <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 to-yellow-500/20 mix-blend-overlay" />
                                 </div>
 
-                                <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm">
-                                    AI Generated Preview
+                                {/* Layer 3: Overlay Effects (Optional, e.g. Magic Dust) */}
+                                <div className="absolute inset-0 pointer-events-none mix-blend-screen opacity-50">
+                                    <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-yellow-300 rounded-full blur-[80px] opacity-40"></div>
+                                </div>
+
+                                <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm z-20">
+                                    AI Personalization Prototype
                                 </div>
                             </div>
 
@@ -191,9 +227,13 @@ export function PersonalizationFlow() {
                                     <RefreshCw className="mr-2 h-4 w-4" />
                                     Try Another Photo
                                 </Button>
-                                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200">
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Download Page
+                                <Button
+                                    onClick={handleDownload}
+                                    disabled={isDownloading}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200"
+                                >
+                                    {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                    {isDownloading ? 'Saving...' : 'Download Page'}
                                 </Button>
                             </div>
                         </motion.div>

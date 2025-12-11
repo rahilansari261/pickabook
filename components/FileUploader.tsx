@@ -53,43 +53,72 @@ export function FileUploader({ onFileSelect, selectedFile, onClear }: FileUpload
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className={cn(
-                            "relative group cursor-pointer flex flex-col items-center justify-center w-full h-64 rounded-3xl border-2 border-dashed transition-all duration-300",
-                            isDragActive
-                                ? "border-indigo-500 bg-indigo-50/50 scale-[1.02]"
-                                : "border-gray-300 hover:border-indigo-400 hover:bg-gray-50/50 bg-white/40"
-                        )}
-                        onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
-                        onDragLeave={() => setIsDragActive(false)}
-                        onDrop={onDrop}
+                        className="flex flex-col gap-6"
                     >
-                        <input
-                            type="file"
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                            onChange={handleChange}
-                            accept="image/*"
-                        />
+                        <div
+                            className={cn(
+                                "relative group cursor-pointer flex flex-col items-center justify-center w-full h-64 rounded-3xl border-2 border-dashed transition-all duration-300",
+                                isDragActive
+                                    ? "border-indigo-500 bg-indigo-50/50 scale-[1.02]"
+                                    : "border-gray-300 hover:border-indigo-400 hover:bg-gray-50/50 bg-white/40"
+                            )}
+                            onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
+                            onDragLeave={() => setIsDragActive(false)}
+                            onDrop={onDrop}
+                        >
+                            <input
+                                type="file"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                onChange={handleChange}
+                                accept="image/*"
+                            />
 
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-                            <div className={cn(
-                                "p-4 rounded-full mb-4 transition-colors duration-300",
-                                isDragActive ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-400 group-hover:text-indigo-500 group-hover:bg-indigo-50"
-                            )}>
-                                <Upload className="w-8 h-8" />
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+                                <div className={cn(
+                                    "p-4 rounded-full mb-4 transition-colors duration-300",
+                                    isDragActive ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-400 group-hover:text-indigo-500 group-hover:bg-indigo-50"
+                                )}>
+                                    <Upload className="w-8 h-8" />
+                                </div>
+                                <p className="mb-2 text-lg font-medium text-gray-700">
+                                    <span className="text-indigo-600">Click to upload</span> or drag and drop
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    SVG, PNG, JPG or GIF (max. 800x400px)
+                                </p>
                             </div>
-                            <p className="mb-2 text-lg font-medium text-gray-700">
-                                <span className="text-indigo-600">Click to upload</span> or drag and drop
+                        </div>
+
+                        {/* Example Selection Section */}
+                        <div className="text-center">
+                            <p className="text-sm text-gray-500 mb-3 uppercase tracking-wider font-semibold">
+                                Or try with an example
                             </p>
-                            <p className="text-sm text-gray-500">
-                                SVG, PNG, JPG or GIF (max. 800x400px)
-                            </p>
+                            <div className="flex justify-center gap-4">
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const response = await fetch('/child.jpg');
+                                            const blob = await response.blob();
+                                            const file = new File([blob], "child.jpg", { type: "image/jpeg" });
+                                            handleFile(file);
+                                        } catch (error) {
+                                            console.error("Failed to load example image", error);
+                                        }
+                                    }}
+                                    className="group relative w-16 h-16 rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all hover:scale-105 ring-2 ring-transparent hover:ring-indigo-400"
+                                >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src="/child.jpg" alt="Example" className="w-full h-full object-cover" />
+                                </button>
+                            </div>
                         </div>
                     </motion.div>
                 ) : (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="relative w-full h-64 rounded-3xl overflow-hidden shadow-lg group"
+                        className="relative w-full h-64 rounded-3xl overflow-hidden shadow-lg group bg-gray-100"
                     >
                         {previewUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -118,3 +147,4 @@ export function FileUploader({ onFileSelect, selectedFile, onClear }: FileUpload
         </div>
     );
 }
+
